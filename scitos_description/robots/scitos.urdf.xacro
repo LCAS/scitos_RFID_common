@@ -1,0 +1,6 @@
+<robot xmlns:xacro="http://ros.org/wiki/xacro" name="scitos">
+    <xacro:include filename="$(find scitos_description)/urdf/scitos.urdf.xacro"/>
+
+    <xacro:scitos prefix="scitos"/>
+
+</robot>

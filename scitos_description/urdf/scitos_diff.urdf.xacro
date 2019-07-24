@@ -1,0 +1,426 @@
+<?xml version="1.0"?>
+
+<root xmlns:xacro="http://ros.org/wiki/xacro"
+      xmlns:sensor="http://ros.org/wiki/gazebo"
+      xmlns:interface="http://ros.org/wiki/gazebo"
+      xmlns:controller="http://ros.org/wiki/gazebo">
+
+    <xacro:arg name="min_frequency" default="800.0"/>
+    <xacro:arg name="max_frequency" default="920.0"/>
+    <xacro:arg name="gain" default="2.5"/>
+    <xacro:arg name="sensitivity" default="-90.0"/>
+
+    <xacro:property name="M_PI" value="3.1415926535897931"/>
+
+    <xacro:macro name="scitos" params="prefix">
+        <link name="base_link">
+            <inertial>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+
+                <mass value="150.000"/> <!-- TODO: Find real weight. -->
+                <inertia
+                    ixx="2.0"
+                    ixy="0.0000"
+                    ixz="0.0000"
+                    iyy="2.0"
+                    iyz="0.0000"
+                    izz="2.0"
+                />
+            </inertial>
+            <visual>
+                <origin xyz="-0.07 0 0.75" rpy="0 0 0"/>
+                <geometry>
+                    <mesh filename="package://scitos_description/meshes/scitos_materials.dae"/>
+                </geometry>
+            </visual>
+            <collision>
+                <origin xyz="-0.07 0 0.75" rpy="0 0 0"/>
+                <geometry>
+                    <mesh filename="package://scitos_description/meshes/scitos_materials.dae"/>
+                </geometry>
+            </collision>
+        </link>
+
+
+        <!-- Front laser (TODO: Actual position and specs) -->
+        <joint name="${prefix}_base_laser_front_fixed" type="fixed">
+            <origin xyz="0.200 0.000 0.35" rpy="0 0 0"/>
+            <parent link="base_link"/>
+            <child  link="base_laser_link"/>
+        </joint>
+        <link name="base_laser_link">
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <inertial>
+                <mass value="1e-5"/>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <inertia ixx="1e-6"
+                         ixy="0"
+                         ixz="0"
+                         iyy="1e-6"
+                         iyz="0"
+                         izz="1e-6"
+                />
+            </inertial>
+            <visual>
+                <geometry>
+                    <box size="0.05 0.05 0.05"/>
+                </geometry>
+            </visual>
+            <collision>
+                <geometry>
+                    <box size="0.01 0.01 0.01"/>
+                </geometry>
+            </collision>
+        </link>
+        <gazebo reference="base_laser_link">
+            <sensor type="ray" name="base_laser_front">
+                <pose>0 0 0 0 0 0</pose>
+                <visualize>true</visualize>
+                <update_rate>10.0</update_rate>
+                <ray>
+                    <scan>
+                        <horizontal>
+                            <samples>540</samples>
+                            <min_angle>-${5*M_PI/8}</min_angle>
+                            <max_angle>${5*M_PI/8}</max_angle>
+                        </horizontal>
+                    </scan>
+                    <range>
+                        <min>0.10</min>
+                        <max>30.0</max>
+                        <resolution>0.01</resolution>
+                    </range>
+                    <noise>
+                        <type>gaussian</type>
+                        <mean>0.0</mean>
+                        <stddev>0.01</stddev>
+                    </noise>
+                </ray>
+                <plugin     name="gazebo_ros_head_hokuyo_controller"
+                        filename="libgazebo_ros_laser.so">
+                    <topicName>scan</topicName>
+                    <frameName>base_laser_link</frameName>
+                </plugin>
+            </sensor>
+        </gazebo>
+
+
+
+        <!-- Front base camera (TODO: Actual position and specs) -->
+        <joint name="${prefix}_base_camera_fixed" type="fixed">
+            <origin xyz="0.200 0.000 1.50" rpy="0 0 0"/>
+            <parent link="base_link"/>
+            <child  link="base_camera_link"/>
+        </joint>
+        <link name="base_camera_link">
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <inertial>
+                <mass value="1e-5"/>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <inertia ixx="1e-6"
+                         ixy="0"
+                         ixz="0"
+                         iyy="1e-6"
+                         iyz="0"
+                         izz="1e-6"
+                />
+            </inertial>
+            <visual>
+                <geometry>
+                    <box size="0.04 0.04 0.04"/>
+                </geometry>
+            </visual>
+            <collision>
+                <geometry>
+                    <box size="0.04 0.04 0.04"/>
+                </geometry>
+            </collision>
+        </link>
+
+        <gazebo reference="base_camera_link">
+          <sensor type="depth" name="xtion_frame_sensor">
+            <always_on>true</always_on>
+            <update_rate>30.0</update_rate>
+            <camera>
+              <horizontal_fov>${63.0*M_PI/180.0}</horizontal_fov>
+              <image>
+                <format>B8G8R8</format>
+                <width>640</width>
+                <height>480</height>
+              </image>
+              <clip>
+                <near>0.3</near>
+                <far>8.0</far>
+              </clip>
+            </camera>
+            <plugin name="xtion_frame_controller" filename="libgazebo_ros_openni_kinect.so">
+              <alwaysOn>true</alwaysOn>
+              <updateRate>30.0</updateRate>
+              <cameraName>xtion</cameraName>
+              <imageTopicName>rgb/image_raw</imageTopicName>
+              <cameraInfoTopicName>rgb/camera_info</cameraInfoTopicName>
+              <depthImageTopicName>depth_registered/image_raw</depthImageTopicName>
+              <depthImageCameraInfoTopicName>depth_registered/camera_info</depthImageCameraInfoTopicName>
+              <pointCloudTopicName>depth_registered/points</pointCloudTopicName>
+              <frameName>xtion_rgb_optical_frame</frameName>
+              <pointCloudCutoff>0.5</pointCloudCutoff>
+              <pointCloudCutoffMax>8.0</pointCloudCutoffMax>
+              <distortionK1>0.00000001</distortionK1>
+              <distortionK2>0.00000001</distortionK2>
+              <distortionK3>0.00000001</distortionK3>
+              <distortionT1>0.00000001</distortionT1>
+              <distortionT2>0.00000001</distortionT2>
+            </plugin>
+          </sensor>
+        </gazebo>
+
+        <!-- For odometry -->
+        <joint name="${prefix}_base_footprint_fixed" type="fixed">
+            <origin xyz="0 0 0.0" rpy="0 0 0"/>
+            <parent link="base_footprint"/>
+            <child  link="base_link"/>
+        </joint>
+        <link name="base_footprint"/>
+
+        <gazebo reference="${prefix}_base_link">
+            <selfCollide>false</selfCollide>
+        </gazebo>
+
+        <gazebo>
+        <plugin filename="libgazebo_ros_p3d.so" name="gazebo_ros_p3d">
+          <bodyName>base_link</bodyName>
+          <topicName>ground_truth_odom</topicName>
+          <alwaysOn>true</alwaysOn>
+          <updateRate>100.0</updateRate>
+        </plugin>
+      </gazebo>
+
+
+
+      <gazebo>
+      <plugin name="differential_drive_controller" filename="libgazebo_ros_diff_drive.so">
+        <alwaysOn>true</alwaysOn>
+        <updateRate>20</updateRate>
+        <leftJoint>front_right_wheel_joint</leftJoint>
+        <rightJoint>front_left_wheel_joint</rightJoint>
+        <wheelSeparation>0.6</wheelSeparation>
+        <wheelDiameter>0.08</wheelDiameter>
+        <torque>200</torque>
+         <legacyMode>true</legacyMode>
+        <commandTopic>cmd_vel</commandTopic>
+        <odometryTopic>odom</odometryTopic>
+        <odometryFrame>odom</odometryFrame>
+        <robotBaseFrame>base_footprint</robotBaseFrame>
+        <rosDebugLevel>na</rosDebugLevel>
+        <publishWheelTF>false</publishWheelTF>
+        <publishWheelJointState>false</publishWheelJointState>
+        <wheelAcceleration>0</wheelAcceleration>
+        <wheelTorque>5</wheelTorque>
+        <odometrySource>encoder</odometrySource>
+        <publishTf>1</publishTf>
+      </plugin>
+
+    </gazebo>
+
+
+<link name="front_right_wheel">
+    <visual>
+      <origin rpy="1.57079632679 0  0 " xyz="0 0 0"/>
+      <geometry>
+        <cylinder length="0.02" radius="0.04"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </visual>
+    <collision>
+      <origin rpy="1.57079632679 0 0 " xyz="0 0 0"/>
+      <geometry>
+        <cylinder length="0.02" radius="0.04"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="2.5"/>
+      <origin xyz="0 0 0"/>
+      <inertia ixx="0.00108333333333" ixy="0" ixz="0" iyy="0.00108333333333" iyz="0" izz="0.002"/>
+    </inertial>
+  </link>
+  <gazebo reference="front_right_wheel">
+    <mu1 value="1.0"/>
+    <mu2 value="1.0"/>
+    <kp value="10000000.0"/>
+    <kd value="1.0"/>
+    <fdir1 value="1 0 0"/>
+    <material>Gazebo/Grey</material>
+    <turnGravityOff>false</turnGravityOff>
+  </gazebo>
+  <joint name="front_right_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="front_right_wheel"/>
+    <origin rpy="0 0 0" xyz="0.0 0.3 0.0"/>
+    <axis rpy="0  0" xyz="0 1 0"/>
+    <limit effort="100" velocity="100"/>
+    <joint_properties damping="0.0" friction="0.0"/>
+  </joint>
+  <!-- Transmission is important to link the joints and the controller -->
+  <transmission name="front_right_wheel_joint_trans">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="front_right_wheel_joint"/>
+    <actuator name="front_right_wheel_joint_motor">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <!--fb : front, back ; lr: left, right -->
+  <link name="front_left_wheel">
+    <visual>
+      <origin rpy="1.57079632679 0  0 " xyz="0 0 0"/>
+      <geometry>
+        <cylinder length="0.02" radius="0.04"/>
+      </geometry>
+      <material name="DarkGray"/>
+    </visual>
+    <collision>
+      <origin rpy="1.57079632679 0 0 " xyz="0 0 0"/>
+      <geometry>
+        <cylinder length="0.02" radius="0.04"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="2.5"/>
+      <origin xyz="0 0 0"/>
+      <inertia ixx="0.00108333333333" ixy="0" ixz="0" iyy="0.00108333333333" iyz="0" izz="0.002"/>
+    </inertial>
+  </link>
+  <gazebo reference="front_left_wheel">
+    <mu1 value="1.0"/>
+    <mu2 value="1.0"/>
+    <kp value="10000000.0"/>
+    <kd value="1.0"/>
+    <fdir1 value="1 0 0"/>
+    <material>Gazebo/Grey</material>
+    <turnGravityOff>false</turnGravityOff>
+  </gazebo>
+  <joint name="front_left_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="front_left_wheel"/>
+    <origin rpy="0 0 0" xyz="0.0 -0.3 0.0"/>
+    <axis rpy="0  0" xyz="0 1 0"/>
+    <limit effort="100" velocity="100"/>
+    <joint_properties damping="0.0" friction="0.0"/>
+  </joint>
+  <!-- Transmission is important to link the joints and the controller -->
+  <transmission name="front_left_wheel_joint_trans">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="front_left_wheel_joint"/>
+    <actuator name="front_left_wheel_joint_motor">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <!--Caster front  -->
+  <link name="caster_front_link">
+    <visual>
+      <origin rpy="1.57079632679 0 0" xyz="0 0.02 0"/>
+      <geometry>
+        <sphere radius="0.026"/>
+      </geometry>
+      <material name="Black"/>
+    </visual>
+    <collision>
+      <geometry>
+        <sphere radius="0.026"/>
+      </geometry>
+      <origin rpy="1.57079632679 0 0" xyz="0 0.02 0"/>
+    </collision>
+    <inertial>
+      <mass value="0.5"/>
+      <origin xyz="0 0 0"/>
+      <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
+    </inertial>
+  </link>
+  <joint name="caster_front_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="caster_front_link"/>
+    <origin rpy="-1.57079632679 0 0" xyz="0.2 0.0 0.007"/>
+  </joint>
+  <gazebo reference="caster_front_link">
+    <turnGravityOff>false</turnGravityOff>
+  </gazebo>
+  <!--Caster back  -->
+  <link name="caster_back_link">
+    <visual>
+      <origin rpy="1.57079632679 0 0" xyz="0 0.02 0 "/>
+      <geometry>
+        <sphere radius="0.026"/>
+      </geometry>
+      <material name="Black"/>
+    </visual>
+    <collision>
+      <geometry>
+        <sphere radius="0.026"/>
+      </geometry>
+      <origin rpy="1.57079632679 0 0" xyz="0 0.02 0 "/>
+    </collision>
+    <inertial>
+      <mass value="0.5"/>
+      <origin xyz="0 0 0"/>
+      <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
+    </inertial>
+  </link>
+  <joint name="caster_back_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="caster_back_link"/>
+    <origin rpy="-1.57079632679 0 0" xyz="-0.35 0.0 0.007"/>
+  </joint>
+  <gazebo reference="caster_back_link">
+    <turnGravityOff>false</turnGravityOff>
+  </gazebo>
+
+    <link name="rfid_reader_link">
+      <collision name="reader_collision">
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <!-- mesh filename="model://antenna/antenna.stl"/ -->
+          <mesh scale="0.5 0.5 0.5" filename="package://gazebo_rfid_node/models/antenna/antenna.stl"/>
+        </geometry>
+      </collision>
+
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <!-- mesh filename="model://antenna/antenna.stl"/ -->
+          <mesh scale="0.5 0.5 0.5" filename="package://gazebo_rfid_node/models/antenna/antenna.stl"/>
+        </geometry>
+      </visual>
+
+      <inertial>
+        <mass value="1e-5" />
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
+      </inertial>
+    </link>
+
+    <joint name="base_sens_rfid" type="fixed">
+      <parent link="base_link"/>
+      <child link="rfid_reader_link"/>
+      <axis xyz="0 1 0" />
+      <origin xyz="0.30 0 .50" rpy="0 0 0"/>
+    </joint>
+
+    <gazebo reference="rfid_reader_link">
+      <sensor name="tiago_rfid_reader_sensor" type="wireless_receiver">
+        <pose>0 0 0 0 0 0</pose>
+        <visualize>true</visualize>
+        <update_rate>40</update_rate>
+        <always_on>1</always_on>
+        <transceiver>
+          <min_frequency>$(arg min_frequency)</min_frequency>
+          <max_frequency>$(arg max_frequency)</max_frequency>
+          <gain>$(arg gain)</gain>
+          <sensitivity>$(arg sensitivity)</sensitivity>
+        </transceiver>
+      </sensor>
+    </gazebo>
+
+
+    </xacro:macro>
+</root>

@@ -1,0 +1,22 @@
+<launch>
+    <arg name="gui"    default="true"/>
+    <arg name="paused" default="false"/>
+
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="paused" value="$(arg paused)"/>
+        <arg name="gui"    value="$(arg gui)"/>
+    </include>
+    <include file="$(find scitos_description)/launch/upload_scitos.launch"/>
+
+    <node name="robot_state_publisher"
+           pkg="robot_state_publisher"
+          type="robot_state_publisher"/>
+
+    <node   name="scitos_robot_spawner"
+             pkg="gazebo_ros"
+            type="spawn_model"
+          output="screen"
+            args="-z 0.0 -urdf -param robot_description -model scitos"
+    />
+
+</launch>
