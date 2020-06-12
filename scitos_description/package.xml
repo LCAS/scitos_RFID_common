@@ -7,9 +7,9 @@
     (mechanical, kinematic, visual, etc.) of the SCITOS robot.
   </description>
 
-  <maintainer email="l.kunze@cs.bham.ac.uk">Lars Kunze</maintainer>
+  <maintainer email="mfernandezcarmona@lincoln.ac.uk">mfernandezcarmona</maintainer>
 
-  <license>BSD</license>
+  <license>MIT</license>
 
   <url type="website">http://github.com/strands-project/scitos_common</url>
 
@@ -18,8 +18,8 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <run_depend>joint_state_publisher</run_depend>
-  <run_depend>robot_state_publisher</run_depend>
-  <run_depend>robot_pose_publisher</run_depend>
+  <depend>joint_state_publisher</depend>
+  <depend>robot_state_publisher</depend>
+  <depend>robot_pose_publisher</depend>
 
 </package>

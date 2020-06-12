@@ -8,7 +8,7 @@
     models of robot components.
   </description>
 
-  <maintainer email="l.kunze@cs.bham.ac.uk">Lars Kunze</maintainer>
+  <maintainer email="mfernandezcarmona@lincoln.ac.uk">mfernandezcarmona</maintainer>
 
   <license>BSD</license>
 
@@ -18,8 +18,8 @@
   <author email="nilsbore@gmail.com">Nils Bore</author>
 
   <buildtool_depend>catkin</buildtool_depend>
-  <run_depend>scitos_description</run_depend>
-  <run_depend>scitos_msgs</run_depend>
+  <depend>scitos_description</depend>
+  <depend>scitos_msgs</depend>
 
   <export>
     <metapackage/>
